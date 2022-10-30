@@ -1,0 +1,180 @@
+#================================================================================
+# Author: Kabeli Charles 202000679
+# Email: kabeli.charles@gmail.com
+# Phone: +26656243089
+# Date:  October 25, 2022
+# Functional description: This is the low level machine code of the program that determines and prints the first 10 reversible prime squares
+#===============================================================================
+.data
+ #Title:    .asciiz "The First 10 Reversible Prime Squares:\n"
+ #number: .word 1 # The number to be checked if it is prime, initialised to 1.
+ #divisor:  .word 0     # A number to divide the incremented number to check its factors
+ #factors: .word 0    # this variable stores the number of factors found
+ # found: .word 0    # this variable determines the number of reversible prime squares found
+#	next_line:.asciiz  "\n"
+#	space:.asciiz ": "
+#.text
+#.globl main
+#.ent main
+#main:
+	#prints the title
+	0x34020004  	     	   // li $v0, 4 
+	0x3c041001  		 // la $a0, Title 
+	0x0XXXXXXC                      //syscall 
+	#store variables in temp registers
+	0x8c280028  		//lw $t0 , number 
+	0x8c29002c  		//lw $t1 , divisor 
+	0x8c2a0030  		//lw $t2 , factors 
+	0x8c2d0034 		//lw $t5, found 
+	#Loop1:
+	0x00082021 		//move $a0 , $t0 
+	0x00092821  		//move $a1 , $t1 
+	0x000a3021		// move $a2 , $t2 
+	#calls the function Is_Prime
+	0x0c100051 		//jal Is_Prime 
+	0x34010001 		//beq $v0, 1, Prime 
+	010220003  		//beq $1, $2, 12 [Prime-0x00400064] 
+	0x21080001 		//add $t0, $t0, 1 
+	0x08100014		// j 0x00400050 [Loop1]
+	#prime:
+	0x71082002 		//mul $a0, $t0, $t0 
+	#calls the function Reverse:
+	0x0c100068  		//jal 0x004001a0 [Reverse]
+	0x00025821 		//move $t3, $v0 
+	0x00022021 		//move $a0, $v0 
+	0x71082802 		//mul $a1, $t0, $t0 
+	#calls the function Is_Palindrome:
+	0x0c100078 		//jal 0x004001e0 [Is_Palindrome]
+	0x00022021 		//move $a0, $v0
+	0x34010001  		// beq $a0, 1 , True 
+	0x10240002 		//beq $1, $4, 8 [True-0x00400090]
+	0x08100028        		//j 0x004000a0 [Not_Palindrome]
+	#True:
+	0x21080001 		//add $t0, $t0, 1 
+	0x08100014 		//j 0x00400050 [Loop1] 
+	#Not_Palindrome:
+	0x00082021 		//move $a0, $t0  
+	#calls the function Reverse:
+	0x0c100068		//  jal 0x004001a0 [Reverse]
+	0x00046021		// move $t4, $a0
+	0x34050000 		// li $a1,0 
+	0x34060000  		//li $a2,0 
+	#calls the function Is_Prime:
+	0x0c100051 		// jal 0x00400144 [Is_Prime]
+	0x34010001 		//beq $a0, 1 , check_square 
+	0x10240002 		// [check_square-0x004000bc]
+	0x08100037		// j 0x004000dc [not_square]; j not_square 
+	#check_square:
+	0x000b2021 		//move $a0, $t3 
+	0x000c2821		//move $a1, $t4 
+	#calls the function Check Square:
+	0x0c100080 		// jal 0x00400200 [CheckSquare]
+	0x34010001		// bne $v0, 1, not_square 
+	0x14220002 		//bne $1, $2, 8 [not_square-0x004000d4] 
+	0x08100039  		// j True4 
+	#not_square:
+	0x21080001 		//add $t0, $t0, 1 
+	0x08100014 		// j 0x00400050 [Loop1] 
+	#True4:
+	0x00085821 		//move $t3,$t0
+	0x0810003b     		//j 0x004000ec [Print] 
+	#Print:
+	0x21ad0001 		//add $t5,$t5,1
+	0x000d2021		// move $a0, $t5
+	0x34020001 		// li $v0,1  
+	0x0XXXXXXc 		//syscall 
+	0x34020004		// li $v0, 4 
+	0x3c011001 		//la $a0, space 
+	0x0XXXXXXc 		//syscall 
+	0x716b2002 		// mul $a0, $t3, $t3 
+	0x34020001 		// li $v0, 1 
+	0x00042021  		// move $a0,$a0
+	0x0XXXXXXc 		//syscall  
+	0x3401000a  		//$t5, 10 ,Exit 
+	0x102d0007  		// [Exit-0x00400120]
+	0x21080001  		// add $t0, $t0,1 
+	0x34020004  		// li $v0,4 
+	0x3c011001  		// la $a0, next_line 
+	0x0XXXXXXc 		//syscall  
+	0x08100014 		// j 0x00400050 [Loop1]  
+	#Exit:
+	0x3402000a 		// li $v0, 10 
+	0x0XXXXXXc 		//syscall  
+#The implimentation of Is_Prime function:
+#Is_Prime:
+	#Loop2:
+	0x0085082a 		//bgt $a1,$a0, Next
+	0x20a50001 		//add $a1, $a1, 1 
+	0x14a00003 		// rem $a3, $a0, $a1 
+	0x10070002		//  beq $0, $7, 8 [Loop3-0x00400164]
+	0x08100051  		// j Loop2 
+	#Loop3:
+	0x20c60001		// add $a2, $a2, 1 
+	0x0085082a  		//bgt $a1, $a0, Next
+	0x08100051  		// j Loop2 
+	#Next:
+	0x34010002 		// beq $a2, 2, True1 
+	0x10260002  		// [True1-0x00400180] 
+	0x08100065 		//j False 
+	#True1:
+	0x34040001  		// li $a0, 1 
+	0x00041021 		// move $v0, $a0 
+	0x03e00008  		// jr $ra 
+	#False:
+	0x34040000  		// li $a0, 0 
+	0x00041021 		// move $v0, $a0 
+	0x03e00008  		// jr $ra 
+#Implementation of the function Reverse:
+	0x00042021  		//move $a0, $a0
+	0x34050000  		//li $a1, 0 
+	#Loop4:
+	0x1004000b  		//beq $a0, 0, Return
+	0x3401000a  		// mul $a1, $a1, 10
+		70a12802 	// mul $5, $5, $1           
+	0x3401000a  		// rem $a2, $a0, 10 
+		0x0081001a 	// div $4, $1
+		0x00003010 	// mfhi $6 
+	0x00a62820  		// add $a1, $a1, $a2  
+	0x3401000a  		// div $a0, $a0, 10 
+		0x0081001a 	// div $4, $1 
+		0x00002012	//  mflo $4        
+	0x0810006a 		//j Loop4 
+	#Return:
+	0x00052021 		//move $a0, $a1 
+	0x00041021  		//move $v0, $a0 
+	0x03e00008  		// jr $ra 
+#The implimentation of Is_Palindrome Function:
+#Is_Palindrome:
+	#Loop5:
+	0x10850002		//$a0, $a1, True2
+	0x0810007d 		//j False1 
+	#True2:
+	0x34040001  		//li $a0, 1 
+	0x00041021  		//move $v0, $a0 
+	#False1:
+	0x34040000 		//li $a0, 0 
+	0x00041021  		//move $v0, $a0 
+	0x03e00008  		// jr $ra 
+#The implimentation of the function Checksquare:
+#CheckSquare:
+	0x14a00003  bne $5, $0, 12           ; 228: divu $t3, $a0, $a1
+		0x00000000 	// nop                      
+		0x0000000d	// break               
+		0x0085001b  	//divu $4, $5              
+		0x00005812  	//mflo $11      
+	0x11650002 		// beq $11, $5, 8 [SquareTrue-0x00400214]
+	08100089  		// j SquareFalse
+	#SquareTrue:
+	 0x34040001  		//li $a0, 1 
+	 0x03e00008  		// jr $ra 
+
+	#SquareFalse:
+	0x34040000 		//li $a0, 0 
+	0x03e00008  		// jr $ra 
+
+
+           
+          
+     
+
+
